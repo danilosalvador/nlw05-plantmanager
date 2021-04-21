@@ -1,4 +1,5 @@
 import React from 'react';
+import { StatusBar } from 'react-native';
 import AppLoading from 'expo-app-loading';
 import {
   useFonts,
@@ -7,6 +8,7 @@ import {
 } from '@expo-google-fonts/jost';
 
 import Routes from './src/routes';
+import colors from './src/styles/colors';
 
 export default function App() {
   const [ fontsLoaded ] = useFonts({
@@ -21,6 +23,9 @@ export default function App() {
   }
 
   return (
-    <Routes /> 
+    <>
+      <StatusBar barStyle='dark-content' backgroundColor={colors.white} />
+      <Routes /> 
+    </>
   );
 }
