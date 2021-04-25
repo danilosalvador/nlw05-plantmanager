@@ -8,8 +8,9 @@ import {
 } from 'react-native';
 import AsyncStorange from '@react-native-async-storage/async-storage';
 import { getStatusBarHeight } from 'react-native-iphone-x-helper';
+import LottieView from 'lottie-react-native';
 
-import avatar from '../assets/danilo.png';
+import avatar from '../assets/avatar.json';
 import colors from '../styles/colors';
 import fonts from '../styles/fonts';
 
@@ -31,7 +32,12 @@ export function Header() {
         <Text style={styles.greeting}>Olá,</Text>
         <Text style={styles.userName}>{userName}</Text>
       </View>
-      <Image style={styles.avatar} source={avatar} />
+      <LottieView 
+        style={styles.avatar} 
+        source={avatar}
+        autoPlay
+        loop
+      />
     </View>
   );
 }
@@ -60,6 +66,5 @@ const styles = StyleSheet.create({
   avatar: {
     width: 70,
     height: 70,
-    borderRadius: 40,
   },
 });

@@ -1,21 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { 
+  Alert,
   FlatList,
   Image,
   StyleSheet, Text, View,
 } from 'react-native';
+import LottieView from 'lottie-react-native';
 
 import { Header } from '../componets/Header';
+import { Loading } from '../componets/Loading';
+import { PlantCardSecundary } from '../componets/PlantCardSecundary';
 
-import colors from '../styles/colors';
-
-import waterdrop from '../assets/waterdrop.png';
-import { Plant } from '../model/plant';
-import { loadPlant } from '../services/storange';
 import { formatDistance } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+import { loadPlant, removePlant } from '../services/storange';
+import { Plant } from '../model/plant';
+
+import empty from '../assets/empty.json';
+import colors from '../styles/colors';
 import fonts from '../styles/fonts';
-import { PlantCardSecundary } from '../componets/PlantCardSecundary';
+
+import waterdrop from '../assets/waterdrop.png';
 
 export function MyPlants() {
   const [list, setList] = useState<Plant[]>([]);
@@ -26,57 +32,101 @@ export function MyPlants() {
     async function loadStorageDate() {
       const plantsStoraged = await loadPlant();
 
-      const nextTime = formatDistance(
-        new Date(plantsStoraged[0].dateTimeNotification).getTime(),
-        new Date().getTime(),
-        {
-          locale: ptBR
-        }
-      );
+      if (plantsStoraged.length > 0) {
+        const nextTime = formatDistance(
+          new Date(plantsStoraged[0].dateTimeNotification).getTime(),
+          new Date().getTime(),
+          {
+            locale: ptBR
+          }
+        );
 
-      setNextWaterd(
-        `Regue sua ${plantsStoraged[0].name} daqui a ${nextTime}.`
-      );
-      setList(plantsStoraged);
+        setNextWaterd(
+          `Regue sua ${plantsStoraged[0].name} daqui a ${nextTime}.`
+        );
+        setList(plantsStoraged);
+      }
       setLoading(false);
     }
 
     loadStorageDate();
   }, []);
 
+  function handleRemove(plant: Plant) {
+    Alert.alert('Remover', `Deseja remote a ${plant.name}?`, [
+      {
+        text: 'Não 🙏',
+        style: 'cancel'
+      },
+      {
+        text: 'Sim 🥺',
+        onPress: async () => {
+          try {
+            await removePlant(plant.id);
 
+            setList((oldData) => 
+              oldData.filter((item) => item.id !== plant.id)
+            );
+          } catch {
+           Alert.alert('Ocorreu um erro ao tentar remover o item.');
+          }
+        }
+      }
+    ]);
+  }
+
+  if (loading) {
+    return (
+      <Loading />
+    );
+  }
 
   return (
     <View style={styles.container}>
       <Header />
+      {list.length === 0 && (
+        <View style={styles.emptyContainer}>
+          <LottieView 
+            style={styles.empty}
+            source={empty}
+            autoPlay
+            loop
+          />
+        </View>
+      )}
 
-      <View style={styles.spotlight}>
-        <Image 
-          style={styles.spotlightImage}
-          source={waterdrop} 
-        />
-        <Text style={styles.spotlightText}>
-          {nextWaterd}
-        </Text>
-      </View>
-
-      <View style={styles.plants}>
-        <Text style={styles.plantsTitle}>
-          Próximas regadas
-        </Text>
-        
-        <FlatList
-          data={list}
-          keyExtractor={(item => String(item.id))}
-          renderItem={({ item }) => (
-            <PlantCardSecundary 
-              data={item}
+      {list.length > 0 && (
+        <>
+          <View style={styles.spotlight}>
+            <Image 
+              style={styles.spotlightImage}
+              source={waterdrop} 
             />
-          )}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.list}
-        />
-      </View>
+            <Text style={styles.spotlightText}>
+              {nextWaterd}
+            </Text>
+          </View>
+        
+          <View style={styles.plants}>
+            <Text style={styles.plantsTitle}>
+              Próximas regadas
+            </Text>
+            
+            <FlatList
+              data={list}
+              keyExtractor={(item => String(item.id))}
+              renderItem={({ item }) => (
+                <PlantCardSecundary 
+                  data={item}
+                  handleRemove={() => handleRemove(item)}
+                />
+              )}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.list}
+            />
+          </View>
+        </>
+      )}
     </View>
   );
 }
@@ -87,7 +137,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 30,
-    paddingTop: 50,
     backgroundColor: colors.background,
   },
   spotlight: {
@@ -122,6 +171,14 @@ const styles = StyleSheet.create({
   },
   list: {
     flex: 1
-    
   },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  empty: {
+    width: 100,
+    height: 100,
+  }
 });

@@ -16,5 +16,6 @@ export interface Plant {
 export interface PlantData {
   [id: string]: {
     data: Plant,
+    notificationId: string;
   }
 }
