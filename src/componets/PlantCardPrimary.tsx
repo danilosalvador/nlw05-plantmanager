@@ -2,6 +2,7 @@ import React from 'react';
 import { 
   StyleSheet, 
   Text,
+  View,
 } from 'react-native';
 import { RectButton, RectButtonProps } from 'react-native-gesture-handler';
 import { SvgFromUri } from 'react-native-svg';
@@ -25,11 +26,13 @@ export function PlantCardPrimary({
       style={styles.container}
       {...rest}
     >
-      <SvgFromUri 
-        uri={data.photo} 
-        width={70} 
-        height={70}
-      />
+      <View style={styles.imageContent}>
+        <SvgFromUri 
+          uri={data.photo} 
+          width={70} 
+          height={70}
+        />
+      </View>
       <Text style={styles.title}>
         {data.name}
       </Text>
@@ -51,6 +54,9 @@ const styles = StyleSheet.create({
     fontFamily: fonts.heading,
     color: colors.green_dark,
     marginVertical: 16,
-
+  },
+  imageContent: {
+    width: 70,
+    height: 70,
   }
 });

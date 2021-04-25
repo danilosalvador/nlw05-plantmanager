@@ -1,3 +1,4 @@
+import { useNavigation } from '@react-navigation/core';
 import React, { useEffect, useState } from 'react';
 import { 
   StyleSheet, 
@@ -7,12 +8,14 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
+import api from '../services/api';
+import { Plant } from '../model/plant';
+
 import { EnviromentButton } from '../componets/EnviromentButton';
 import { Header } from '../componets/Header';
 import { Loading } from '../componets/Loading';
 import { PlantCardPrimary } from '../componets/PlantCardPrimary';
 
-import api from '../services/api';
 
 import colors from '../styles/colors';
 import fonts from '../styles/fonts';
@@ -22,30 +25,18 @@ interface EnviromentDTO {
   title: string;
 }
 
-interface PlantDTO {
-  id: number;
-  name: string;
-  about: string;
-  water_tips: string;
-  photo: string;
-  environments: string[];
-  frequency: {
-    times: number;
-    repeat_every: string;
-  }
-}
-
 export function PlantSelect() {
   const [enviroments, setEnviroments] = useState<EnviromentDTO[]>([]);
-  const [plants, setPlants] = useState<PlantDTO[]>([]);
-  const [filteredPlants, setFilteredPlants] = useState<PlantDTO[]>([]);
+  const [plants, setPlants] = useState<Plant[]>([]);
+  const [filteredPlants, setFilteredPlants] = useState<Plant[]>([]);
   const [enviromentSelected, setEnviromentSelected] = useState('all');
   const [isEnviromentLoading, setIsEnviromentLoading] = useState(true);
   const [isPlantLoading, setIsPlantLoading] = useState(true);
 
   const [pageIndex, setPageIndex] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [loadedAll, setLoadedAll] = useState(false);
+
+  const navigation = useNavigation();
 
   useEffect(() => {
     loadEnviroment();
@@ -70,19 +61,23 @@ export function PlantSelect() {
 
   async function loadPlants() {
     const { data } = await api
-      .get(`plants?_sort=name&_order=asc&_page=${pageIndex}&_limit=8`);
+      .get<Plant[]>(`plants?_sort=name&_order=asc&_page=${pageIndex}&_limit=8`);
 
     if (!data) {
       setIsPlantLoading(true);
       return;
     }
 
-    if (pageIndex > 1) {
-      setPlants(oldValue => [...oldValue, ...data]);
-      setFilteredPlants(oldValue => [...oldValue, ...data]);
-    } else {
-      setPlants(data);
-      setFilteredPlants(data);
+    if (data.length > 0) {
+      if (pageIndex > 1) {
+        setPlants(oldValue => [...oldValue, ...data]);
+        setFilteredPlants(oldValue => [...oldValue, ...data]);
+      } else {
+        setPlants(data);
+        setFilteredPlants(data);
+      }
+
+      setPageIndex(oldValue => oldValue + 1);
     }
 
     setIsPlantLoading(false);
@@ -95,10 +90,8 @@ export function PlantSelect() {
     }
 
     setLoadingMore(true);
-    setPageIndex(oldValue => oldValue + 1);
 
     loadPlants();
-
   }
 
   function handleEnviromentSelect(key: string) {
@@ -112,6 +105,10 @@ export function PlantSelect() {
     const filtered = plants.filter(plant => plant.environments.includes(key));
     setFilteredPlants(filtered);
     setIsEnviromentLoading(false);
+  }
+
+  function handlePlantSelect(plant: Plant) {
+    navigation.navigate('PlantSave', { plant });
   }
 
   if (isEnviromentLoading && isPlantLoading) {
@@ -140,9 +137,9 @@ export function PlantSelect() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.enviromentList}
           data={enviroments}
+          keyExtractor={(item) => item.key}
           renderItem={({ item }) => (
             <EnviromentButton
-              key={item.key}
               title={item.title} 
               active={item.key === enviromentSelected}
               onPress={() => handleEnviromentSelect(item.key)}
@@ -156,9 +153,11 @@ export function PlantSelect() {
             numColumns={2}
             showsVerticalScrollIndicator={false}
             data={filteredPlants}
+            keyExtractor={(item) => String(item.id)}
             renderItem={({item}) => (
               <PlantCardPrimary
                 data={item}
+                onPress={() => handlePlantSelect(item)}
               />
             )}
             onEndReachedThreshold={0.1}
